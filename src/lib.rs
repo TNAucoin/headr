@@ -1,4 +1,5 @@
 use clap::{Arg, Command};
+use rand::prelude::Distribution;
 use std::error::Error;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
@@ -29,6 +30,7 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::new("bytes")
                 .short('c')
+                .allow_negative_numbers(false)
                 .help("number of bytes to display"),
         )
         .get_matches();
@@ -44,11 +46,15 @@ pub fn get_args() -> MyResult<Config> {
             .unwrap()
             .parse::<usize>()
             .unwrap(),
-        bytes: matches
-            .get_one::<Option<usize>>("bytes")
-            .unwrap_or_default()
-            .to_owned(),
+        bytes: matches.get_one::<String>("bytes").unwrap().as_str(),
     })
+}
+
+fn parse_positive_int(val: &str) -> MyResult<usize> {
+    match val.parse() {
+        Ok(n) if n > 0 => Ok(n),
+        _ => Err(From::from(val)),
+    }
 }
 
 pub fn run(config: Config) -> MyResult<()> {
